@@ -1,0 +1,6 @@
+{:paths ["src"]
+ :tasks
+ {hi
+  (do
+    (println "hi there")
+    )}}
