@@ -1,19 +1,12 @@
 #!/usr/bin/env sh
 
-echo "Running 'gg'"
+echo "Running 'gg' $@"
 
 GG_PATH="$HOME/russmatney/gg"
 GG_EDN="$GG_PATH/bb.edn"
+GG_CMD="gg/run-command"
 
-_run_command() {
-    local matches=`bb --config $GG_EDN tasks | tail -n +3 | cut -f1 -d ' '`
-    local cmd="$1"
-
-    if [[ $cmd =~ $matches ]]; then
-        bb --config $GG_EDN $@
-    else
-        bb $@
-    fi
-}
-
-_run_command $@
+bb --config $GG_EDN \
+    -x $GG_CMD \
+    --cmd $1 \
+    --arg-string "$@"

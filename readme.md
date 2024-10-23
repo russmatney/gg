@@ -13,3 +13,6 @@ A babashka wrapper with some godot game-dev built-ins.
 - aseprite auto-export file watcher
 - piecemeal project templating
   - i.e. add bones, log.gd, gdunit, etc to your project
+- simple web server for testing web builds
+- generate steam boxart from a source
+- generating changelogs
