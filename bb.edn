@@ -1,6 +1,22 @@
 {:paths ["src"]
  :tasks
- {hi
+ {:requires ([tasks :as tasks]
+             [logger :refer [log]]
+             )
+  :init
   (do
-    (println "hi there")
-    )}}
+    (def godot-bin "/bin/godot")
+    (log "`gg` running task"))
+
+  hi
+  (do
+    (println "hi there"))
+
+  test       (tasks/shell-and-log
+               ;; {:extra-env {"GODOT_BIN" godot-bin}}
+               (str "./addons/gdUnit4/runtest.sh -c -a test"))
+  test-match (let [arg (some-> *command-line-args* first)]
+               (tasks/shell-and-log
+                 ;; {:extra-env {"GODOT_BIN" godot-bin}}
+                 (str "./addons/gdUnit4/runtest.sh -c -a " arg)))}
+ }

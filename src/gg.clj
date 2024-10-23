@@ -3,7 +3,7 @@
    [babashka.process :as p]
    [clojure.edn :as edn]
    [clojure.string :as string]
-   ))
+   [babashka.fs :as fs]))
 
 (defn gg-dir []
   (str (System/getProperty "user.home") "/russmatney/gg"))
@@ -11,33 +11,40 @@
 (defn gg-edn []
   (str (gg-dir) "/bb.edn"))
 
-(defn gg-task-names []
-  (-> (gg-edn)
-      slurp
-      edn/read-string
-      :tasks
-      keys
-      (->> (map str)
-           (into #{}))))
+(defn task-names
+  ([] (task-names (gg-dir)))
+  ([dir]
+   (let [edn-path (str dir "/bb.edn")]
+     (if (not (fs/exists? edn-path))
+       (do
+         (println "no bb.edn" edn-path)
+         nil)
+       (-> edn-path
+           slurp
+           edn/read-string
+           :tasks
+           keys
+           (->> (map str)
+                (into #{})))))))
 
 (defn run-command
-  [{:keys [cmd arg-string]}]
+  [{:keys [cmd arg-string dir]}]
   (println "Running `gg` with cmd" cmd
            (str (when (and arg-string (string/includes? arg-string " "))
                   (str "full arg string:" arg-string))) )
-  (println "gg-tasks" (gg-task-names) cmd)
-  (println "contains?" (contains? (gg-task-names) cmd))
 
   ;; TODO consider handling/passing arg-string along?
 
   (if (not cmd)
     (println "no cmd specified")
-    (let [cmd-str
+    (let [in-local-dir ((task-names dir) cmd)
+          in-gg-dir    ((task-names) cmd)
+          cmd-str
           (str "bb "
-               (when ((gg-task-names) cmd)
-                 (str "--config " (gg-edn)))
+               (cond
+                 in-local-dir (str "--config " dir "/bb.edn")
+                 in-gg-dir    (str "--config " (gg-edn)))
                " " cmd)]
-      (println "running cmd" cmd-str)
       (-> (p/process {:inherit true} cmd-str)
           p/check))))
 
