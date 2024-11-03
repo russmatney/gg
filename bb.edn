@@ -74,4 +74,7 @@
   (tasks/shell-and-log
     (str "godot --no-window -s plug.gd " (string/join " " *command-line-args*)))
 
+  plug-update (tasks/shell-and-log (str "godot --no-window -s plug.gd update force"))
+  plug-clear  (tasks/shell-and-log (str "rm -rf .plugged"))
+
   }}
