@@ -37,8 +37,8 @@
 
   (if (not cmd)
     (println "no cmd specified")
-    (let [in-local-dir ((task-names dir) cmd)
-          in-gg-dir    ((task-names) cmd)
+    (let [in-local-dir ((or (task-names dir) #{}) cmd)
+          in-gg-dir    ((or (task-names) #{}) cmd)
           cmd-str
           (str "bb "
                (cond
