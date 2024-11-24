@@ -155,9 +155,9 @@
     (gather-commits {:dir (expand "~/russmatney/dino")})
     first second first))
 
-(defn commit-hash-link [{:keys [commit dir]}]
+(defn commit-hash-link [{:keys [commit short-dir]}]
   (str "[`" (:commit/short-hash commit) "`]("
-       (str "https://github.com/" dir "/commit/"
+       (str "https://github.com/" short-dir "/commit/"
             (:commit/short-hash commit)) ")"))
 
 (defn commit-date [commit]
@@ -210,6 +210,10 @@
                           (str (fs/cwd)))
                    opts)
          opts    (update opts :dir expand)
+         opts    (assoc opts :short-dir (str
+                                          (-> opts :dir fs/parent fs/file-name)
+                                          "/"
+                                          (-> opts :dir fs/file-name)))
          content (str "# CHANGELOG\n\n"
                       (str
                         (->> (gather-commits opts)
