@@ -176,7 +176,8 @@
 
 (defn commit->lines [{:as opts :keys [commit]}]
   (->>
-    [(str "- (" (commit-hash-link (assoc opts :commit commit)) ") " (:commit/subject commit))
+    [(str "- (" (commit-hash-link (assoc opts :commit commit)) ") " (:commit/subject commit)
+          " - " (:commit/author-name commit))
      (when (seq (string/trim-newline (:commit/body commit)))
        (str "\n" (->> (:commit/body commit)
                       (string/split-lines)
