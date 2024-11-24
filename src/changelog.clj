@@ -3,12 +3,10 @@
    [clojure.string :as string]
    [clojure.edn :as edn]
    [babashka.process :as process]
+   [babashka.fs :as fs]
    [clojure.java.shell :as clj-sh]))
 
 (def changelog-path "CHANGELOG.md")
-;; TODO pass repo name/dir as arguments/derive from in-context repo
-(def repo-name "dino")
-(def repo-dir (str "~/russmatney/" repo-name))
 
 (defn bash [command]
   (clj-sh/sh "bash" "-c" command))
@@ -89,9 +87,9 @@
          (-> res :out string/split-lines))))))
 
 (comment
-  (all-tags {:dir (expand repo-dir)})
-  (last-tag {:dir (expand repo-dir)})
-  (first-commit-hash {:dir (expand repo-dir)}))
+  (all-tags {:dir (expand "~/russmatney/dino")})
+  (last-tag {:dir (expand "~/russmatney/dino")})
+  (first-commit-hash {:dir (expand "~/russmatney/dino")}))
 
 (defn commits
   "Retuns metadata for `n` commits at the specified `dir`."
@@ -124,9 +122,9 @@
 
 (comment
   (->>
-    (commits {:dir        (expand repo-dir) :n 100
-              ;; :after-tag  (last-tag {:dir (expand repo-dir)})
-              :before-tag (last-tag {:dir (expand repo-dir)})
+    (commits {:dir        (expand "~/russmatney/dino")
+              ;; :after-tag  (last-tag {:dir (expand "~/russmatney/dino"
+              :before-tag (last-tag {:dir (expand "~/russmatney/dino")})
               })
     ;; count
     last
@@ -142,10 +140,8 @@
          (partition 2 1)
          reverse)))
 
-(defn gather-commits []
-  (let [dir        (expand repo-dir)
-        opts       {:dir dir}
-        boundaries (release-boundaries opts)]
+(defn gather-commits [opts]
+  (let [boundaries (release-boundaries opts)]
     (->> boundaries
          (map (fn [[after before]]
                 [before
@@ -154,14 +150,14 @@
                                      :after-tag after)))])))))
 
 (comment
-  (release-boundaries {:dir (expand repo-dir)})
+  (release-boundaries {:dir (expand "~/russmatney/dino")})
   (->>
-    (gather-commits)
+    (gather-commits {:dir (expand "~/russmatney/dino")})
     first second first))
 
-(defn commit-hash-link [commit]
+(defn commit-hash-link [{:keys [commit dir]}]
   (str "[`" (:commit/short-hash commit) "`]("
-       (str "https://github.com/russmatney/" repo-name "/commit/"
+       (str "https://github.com/" dir "/commit/"
             (:commit/short-hash commit)) ")"))
 
 (defn commit-date [commit]
@@ -178,9 +174,9 @@
       "Wed, 2 Mar 2024 17:42:41 -0400")))
 
 
-(defn commit->lines [commit]
+(defn commit->lines [{:as opts :keys [commit]}]
   (->>
-    [(str "- (" (commit-hash-link commit) ") " (:commit/subject commit))
+    [(str "- (" (commit-hash-link (assoc opts :commit commit)) ") " (:commit/subject commit))
      (when (seq (string/trim-newline (:commit/body commit)))
        (str "\n" (->> (:commit/body commit)
                       (string/split-lines)
@@ -191,7 +187,7 @@
 
 (defn tag-section
   ([tag-and-commits] (tag-section nil tag-and-commits))
-  ([{:keys [latest-tag-label]} [tag commits]]
+  ([{:as opts :keys [latest-tag-label]} [tag commits]]
    (let [headline
          ;; TODO link to github tag!
          (str "\n## " (cond
@@ -202,25 +198,35 @@
                            (sort-by (comp edn/read-string :commit/author-date-int first second) >)
                            (mapcat (fn [[date comms]]
                                      (concat [(str "\n### " date "\n")]
-                                             (mapcat commit->lines comms)))))]
+                                             (mapcat #(commit->lines (assoc opts :commit %)) comms)))))]
      (concat [(str headline "\n")] commit-lines))))
 
 (defn rewrite-changelog
   ([] (rewrite-changelog nil))
-  ([{:keys [latest-tag-label path]}]
-   (let [content (str "# CHANGELOG\n\n"
+  ([{:as opts :keys [latest-tag-label path]}]
+   (let [opts    (if (nil? (:dir opts))
+                   (assoc opts :dir
+                          ;; default to current directory
+                          (str (fs/cwd)))
+                   opts)
+         opts    (update opts :dir expand)
+         content (str "# CHANGELOG\n\n"
                       (str
-                        (->> (gather-commits)
-                             (mapcat (partial tag-section {:latest-tag-label latest-tag-label}))
+                        (->> (gather-commits opts)
+                             (mapcat (partial tag-section (assoc opts :latest-tag-label latest-tag-label)))
                              (string/join "\n"))))
          p       (or path changelog-path)]
      (println "Writing content to" p)
+     (when-let [docs-parent (fs/parent p)]
+       (when-not (fs/exists? docs-parent)
+         (-> (process/$ mkdir -p ~(str docs-parent)) process/check)))
      (spit p content))))
 
 (comment
+  (str (fs/parent (expand "~/russmatney/dino")))
+  (fs/parent "hi")
   (->>
-    (gather-commits)
-    (map #(select-keys % #{:commit/author-date}))
-    )
-  (rewrite-changelog)
+    (gather-commits {:dir "~/russmatney/dino"})
+    (map #(select-keys % #{:commit/author-date})))
+  (rewrite-changelog {:dir "~/russmatney/dino"})
   (rewrite-changelog {:latest-tag-label "v1.0.0"}))
