@@ -8,6 +8,6 @@ GG_CMD="gg/run-command"
 
 bb --config $GG_EDN \
     -x $GG_CMD \
-    --cmd $1 \
+    --cmd "$1" \
     --dir $(pwd) \
     --arg-string "$@"

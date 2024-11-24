@@ -39,14 +39,14 @@
     (println "no cmd specified")
     (let [in-local-dir ((or (task-names dir) #{}) cmd)
           in-gg-dir    ((or (task-names) #{}) cmd)
-          cmd-str
-          (str "bb "
-               (cond
-                 in-local-dir (str "--config " dir "/bb.edn")
-                 in-gg-dir    (str "--config " (gg-edn)))
-               " " cmd)]
-      (-> (p/process {:inherit true} cmd-str)
-          p/check))))
+          config-str   (cond
+                         in-local-dir (str "--config " dir "/bb.edn")
+                         in-gg-dir    (str "--config " (gg-edn)))
+          cmd-str      (str "bb " config-str " " cmd)]
+      (if config-str
+        (-> (p/process {:inherit true} cmd-str)
+            p/check)
+        (println "command not found")))))
 
 (comment
   (run-command {:cmd "hi"}))
