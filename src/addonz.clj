@@ -99,7 +99,7 @@
         repo-dir)
       (do
         (println "Cloning" repo "to cache...")
-        (shell-and-log (str "git clone " url " " repo-dir))
+        (shell-and-log (str "git clone --depth=1 " url " " repo-dir))
         repo-dir))))
 
 (defn update-repo
@@ -202,7 +202,11 @@
       ;; Handle excludes
       (when (seq exclude)
         (doseq [exclude-path exclude]
-          (let [exclude-full (str dest-path "/" exclude-path)]
+          ;; Strip the include-path prefix from exclude-path to get relative path
+          (let [relative-exclude (if (string/starts-with? exclude-path include-path)
+                                   (string/replace-first exclude-path (str include-path "/") "")
+                                   exclude-path)
+                exclude-full (str dest-path "/" relative-exclude)]
             (when (fs/exists? exclude-full)
               (println "Excluding" exclude-full)
               (fs/delete-tree exclude-full))))))))
@@ -335,6 +339,8 @@
     (->> addons
          (filter (fn [addon]
                    (or
+                    ;; Match full repo (user/repo)
+                    (= addon-name (:repo addon))
                     ;; Match repo name (last part)
                     (= addon-name (repo->dir-name (:repo addon)))
                     ;; Match any include path addon name
