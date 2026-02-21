@@ -6,9 +6,9 @@
    [clojure.java.io :as io]
    [clojure.string :as string]))
 
-(require '[babashka.pods :as pods])
-(pods/load-pod 'org.babashka/filewatcher "0.0.1")
-(require '[pod.babashka.filewatcher :as fw])
+;; (require '[babashka.pods :as pods])
+;; (pods/load-pod 'org.babashka/filewatcher "0.0.1")
+;; (require '[pod.babashka.filewatcher :as fw])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; helpers
@@ -167,18 +167,19 @@
 (defn watch
   "Defaults to watching the current working directory."
   [& _args]
-  (-> (Runtime/getRuntime)
-      (.addShutdownHook (Thread. #(println "\nShut down watcher."))))
-  (fw/watch (cwd) (fn [event]
-                    (let [ext (-> event :path fs/extension)]
-                      (when (#{"aseprite"} ext)
-                        (if (re-seq #"_sheet" (:path event))
-                          (println "Change event for" (:path event) "[bb] Ignoring.")
-                          (do
-                            (println "Change event for" (:path event) "[bb] Processing.")
-                            (pixels-file (:path event)))))))
-            {:delay-ms 100})
-  @(promise))
+  ;; (-> (Runtime/getRuntime)
+  ;;     (.addShutdownHook (Thread. #(println "\nShut down watcher."))))
+  ;; (fw/watch (cwd) (fn [event]
+  ;;                   (let [ext (-> event :path fs/extension)]
+  ;;                     (when (#{"aseprite"} ext)
+  ;;                       (if (re-seq #"_sheet" (:path event))
+  ;;                         (println "Change event for" (:path event) "[bb] Ignoring.")
+  ;;                         (do
+  ;;                           (println "Change event for" (:path event) "[bb] Processing.")
+  ;;                           (pixels-file (:path event)))))))
+  ;;           {:delay-ms 100})
+  ;; @(promise)
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
