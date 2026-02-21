@@ -2,7 +2,8 @@
  :tasks
  {:requires ([tasks :as tasks]
              [logger :refer [log]]
-             [changelog])
+             [changelog]
+             [addonz :as addonz])
   :init
   (do
     (def godot-bin "/bin/godot")
@@ -20,7 +21,7 @@
                  ;; {:extra-env {"GODOT_BIN" godot-bin}}
                  (str "./addons/gdUnit4/runtest.sh -c -a " arg)))
 
-  watch tasks/watch
+  ;; watch tasks/watch
 
   changelog (let [tag-overwrite (some-> *command-line-args* first)]
               (changelog/rewrite-changelog {:latest-tag-label tag-overwrite})
@@ -76,5 +77,15 @@
 
   plug-update (tasks/shell-and-log (str "godot --no-window -s plug.gd update force"))
   plug-clear  (tasks/shell-and-log (str "rm -rf .plugged"))
+
+  addonz-init        (addonz/init)
+  addonz-install     (addonz/install)
+  addonz-update      (if-let [addon (some-> *command-line-args* first)]
+                       (addonz/update-one addon)
+                       (addonz/update-all))
+  addonz-status      (addonz/status)
+  addonz-clean-cache (addonz/clean-cache)
+  addonz-add         (addonz/add (some-> *command-line-args* first))
+  addonz-remove      (addonz/remove (some-> *command-line-args* first))
 
   }}
