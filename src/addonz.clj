@@ -446,7 +446,7 @@
   "Interactive add with prompts for include/exclude"
   [repo-spec]
   (if-not repo-spec
-    (println "Usage: gg addonz add <user/repo>")
+    (println "Usage: gg addonz add <user/repo>, saw: " repo-spec *command-line-args*)
     (if-not (re-matches #".+/.+" repo-spec)
       (println "Invalid repo format. Use 'user/repo' format.")
       (let [config (try

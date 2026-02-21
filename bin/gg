@@ -10,4 +10,4 @@ bb --config $GG_EDN \
     -x $GG_CMD \
     --cmd "$1" \
     --dir $(pwd) \
-    --arg-string "$@"
+    --arg-string "$*"

@@ -30,10 +30,8 @@
 (defn run-command
   [{:keys [cmd arg-string dir]}]
   (println "Running `gg` with cmd" cmd
-           (str (when (and arg-string (string/includes? arg-string " "))
-                  (str "full arg string:" arg-string))) )
-
-  ;; TODO consider handling/passing arg-string along?
+           (when (and arg-string (seq arg-string))
+             (str " with args: " arg-string)))
 
   (if (not cmd)
     (println "no cmd specified")
@@ -42,7 +40,10 @@
           config-str   (cond
                          in-local-dir (str "--config " dir "/bb.edn")
                          in-gg-dir    (str "--config " (gg-edn)))
-          cmd-str      (str "bb " config-str " " cmd)]
+          ;; Extract args from arg-string (remove the command name)
+          args         (when arg-string
+                         (string/trim (string/replace-first arg-string cmd "")))
+          cmd-str      (str "bb " config-str " " cmd (when (seq args) (str " " args)))]
       (if config-str
         (-> (p/process {:inherit true} cmd-str)
             p/check)
